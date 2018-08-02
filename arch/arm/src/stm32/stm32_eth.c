@@ -3430,11 +3430,14 @@ static inline void stm32_ethgpioconfig(FAR struct stm32_ethmac_s *priv)
 #if defined(CONFIG_STM32_MII) || defined(CONFIG_STM32_RMII)
 
   /* MDC and MDIO are common to both modes */
+#if defined(CONFIG_NETDEV_PHY_IOCTL)
 
   stm32_configgpio(GPIO_ETH_MDC);
   stm32_configgpio(GPIO_ETH_MDIO);
 
-  /* Set up the MII interface */
+#endif
+
+/* Set up the MII interface */
 
 #if defined(CONFIG_STM32_MII)
 

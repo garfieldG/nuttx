@@ -749,10 +749,14 @@ static void stm32_rxdescinit(struct stm32_ethmac_s *priv,
 #if defined(CONFIG_NETDEV_PHY_IOCTL) && defined(CONFIG_ARCH_PHY_INTERRUPT)
 static int  stm32_phyintenable(struct stm32_ethmac_s *priv);
 #endif
+
+#if defined(CONFIG_NETDEV_PHY_IOCTL)
 static int  stm32_phyread(uint16_t phydevaddr, uint16_t phyregaddr,
               uint16_t *value);
 static int  stm32_phywrite(uint16_t phydevaddr, uint16_t phyregaddr,
               uint16_t value);
+#endif
+
 #ifdef CONFIG_ETH0_PHY_DM9161
 static inline int stm32_dm9161(struct stm32_ethmac_s *priv);
 #endif
@@ -3042,6 +3046,7 @@ static int stm32_phyintenable(struct stm32_ethmac_s *priv)
 }
 #endif
 
+#if defined(CONFIG_NETDEV_PHY_IOCTL)
 /****************************************************************************
  * Function: stm32_phyread
  *
@@ -3155,6 +3160,7 @@ static int stm32_phywrite(uint16_t phydevaddr, uint16_t phyregaddr, uint16_t val
 
   return -ETIMEDOUT;
 }
+#endif
 
 /****************************************************************************
  * Function: stm32_dm9161
@@ -3240,10 +3246,11 @@ static inline int stm32_dm9161(struct stm32_ethmac_s *priv)
 
 static int stm32_phyinit(struct stm32_ethmac_s *priv)
 {
-  volatile uint32_t timeout;
   uint32_t regval;
+#if defined(CONFIG_NETDEV_PHY_IOCTL)
   uint16_t phyval;
-  int ret;
+#endif
+  int ret = OK;
 
   /* Assume 10MBps and half duplex */
 
@@ -3257,6 +3264,7 @@ static int stm32_phyinit(struct stm32_ethmac_s *priv)
   regval |= ETH_MACMIIAR_CR;
   stm32_putreg(regval, STM32_ETH_MACMIIAR);
 
+#if defined(CONFIG_NETDEV_PHY_IOCTL)
   /* Put the PHY in reset mode */
 
   ret = stm32_phywrite(CONFIG_STM32F7_PHYADDR, MII_MCR, MII_MCR_RESET);
@@ -3266,7 +3274,7 @@ static int stm32_phyinit(struct stm32_ethmac_s *priv)
       return ret;
     }
   up_mdelay(PHY_RESET_DELAY);
-
+#endif
   /* Perform any necessary, board-specific PHY initialization */
 
 #ifdef CONFIG_STM32F7_PHYINIT
@@ -3291,6 +3299,8 @@ static int stm32_phyinit(struct stm32_ethmac_s *priv)
   /* Perform auto-negotiation if so configured */
 
 #ifdef CONFIG_STM32F7_AUTONEG
+  volatile uint32_t timeout;
+
   /* Wait for link status */
 
   for (timeout = 0; timeout < PHY_RETRY_TIMEOUT; timeout++)
@@ -3412,6 +3422,7 @@ static int stm32_phyinit(struct stm32_ethmac_s *priv)
 
 #else /* Auto-negotion not selected */
 
+#if defined(CONFIG_NETDEV_PHY_IOCTL)
   phyval = 0;
 #ifdef CONFIG_STM32F7_ETHFD
   phyval |= MII_MCR_FULLDPLX;
@@ -3428,7 +3439,7 @@ static int stm32_phyinit(struct stm32_ethmac_s *priv)
     }
 
   up_mdelay(PHY_CONFIG_DELAY);
-
+#endif
   /* Remember the selected speed and duplex modes */
 
 #ifdef CONFIG_STM32F7_ETHFD
@@ -3443,7 +3454,7 @@ static int stm32_phyinit(struct stm32_ethmac_s *priv)
         priv->fduplex ? "FULL" : "HALF",
         priv->mbps100 ? 100 : 10);
 
-  return OK;
+  return ret;
 }
 
 /************************************************************************************

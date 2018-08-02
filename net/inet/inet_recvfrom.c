@@ -1224,6 +1224,8 @@ static ssize_t inet_udp_recvfrom(FAR struct socket *psock, FAR void *buf, size_t
 #endif
 
 #ifdef CONFIG_NET_UDP_READAHEAD
+  /* Handle non-blocking UDP sockets */
+
   if (_SS_ISNONBLOCK(psock->s_flags))
     {
       /* Return the number of bytes read from the read-ahead buffer if
